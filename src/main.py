@@ -1,10 +1,11 @@
+from os import write
 import random
 from enum import Enum
 from typing import Optional, List
 
 from fastapi import (
-    FastAPI, Query, Path, Body, Cookie, Header)
-from fastapi.param_functions import File
+    FastAPI, Query, Path, Body, Cookie, Header, Response, 
+    status, UploadFile, Form, File)
 from pydantic import BaseModel, Field
 
 
@@ -128,7 +129,7 @@ async def validate_params(
     return response_data
 
 
-@app.post("/{category_id}/products/")
+@app.post("/{category_id}/products/", status_code=status.HTTP_201_CREATED)
 async def create_product(
     *,
     product: Product = Body(..., embed=True),
@@ -160,12 +161,12 @@ async def update_product(
     }
 
 
-@app.post("/tags/")
+@app.post("/tags/", status_code=status.HTTP_201_CREATED)
 async def create_tags(tags: List[Tag]):
     return tags
 
 
-@app.post("/projects/")
+@app.post("/projects/", status_code=status.HTTP_201_CREATED)
 async def create_projects(project: Project):
     response_data = {"id": random.randint(1, 99999)}
     response_data.update(**project.dict())
@@ -173,6 +174,27 @@ async def create_projects(project: Project):
 
 
 @app.post("/users/", response_model=User, 
-          response_model_exclude={"password"})
+          response_model_exclude={"password"},
+          status_code=status.HTTP_201_CREATED)
 async def create_user(user: User):
     return user
+
+
+@app.post("/login/")
+async def login(
+    *, username: str = Form(...), password: str = Form(...),
+    response: Response    
+):
+    if username == 'admin' and password == 'admin':
+        return {"message": "Login Successful."}
+    else:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return {"message": "Invalid credetials."}
+
+
+@app.post('/uploadfiles/')
+async def upload_file(file: UploadFile = File(...)):
+    return {
+        "filename": file.filename,
+        "content_type": file.content_type
+    }
