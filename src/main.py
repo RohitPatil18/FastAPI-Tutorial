@@ -36,10 +36,15 @@ class Product(BaseModel):
     price: float = Field(..., ge=1, lt=100000)
     tax: Optional[int] = Field(5, ge=0, le=100)
 
-class UserInfo(BaseModel):
+class UserBase(BaseModel):
     id: int = Field(..., ge=1, le=99999)
     username: str = Field(..., min_length=10, max_length=50)
 
+class UserInfo(UserBase):
+    pass
+
+class User(UserBase):
+    password: str
 
 class MetaOut(BaseModel):
     session_id: Optional[str]
@@ -51,12 +56,6 @@ class MetaOut(BaseModel):
 class GreetingOut(BaseModel):
     message: str
     meta: MetaOut
-
-
-class User(BaseModel):
-    id: str
-    username: str
-    password: str
 
 
 @app.get("/")
@@ -161,19 +160,19 @@ async def update_product(
     }
 
 
-@app.post("/tags")
+@app.post("/tags/")
 async def create_tags(tags: List[Tag]):
     return tags
 
 
-@app.post("/projects")
+@app.post("/projects/")
 async def create_projects(project: Project):
     response_data = {"id": random.randint(1, 99999)}
     response_data.update(**project.dict())
     return response_data
 
 
-@app.post("/users", response_model=User, 
+@app.post("/users/", response_model=User, 
           response_model_exclude={"password"})
 async def create_user(user: User):
     return user
