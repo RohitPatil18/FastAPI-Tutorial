@@ -5,11 +5,43 @@ from typing import Optional, List
 
 from fastapi import (
     FastAPI, Query, Path, Body, Cookie, Header, Response, 
-    status, UploadFile, Form, File)
+    status, UploadFile, Form, File, Request)
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
 app = FastAPI()
+
+class AuthenticationFailed(Exception):
+    def __init__(self, code: int = 401, message: str = None):
+        self.code = code
+        if not message:
+            self.message = "Authentication Failed."
+        else:
+            self.message = message
+
+
+@app.exception_handler(AuthenticationFailed)
+async def authentication_failed_handler(
+    request: Request,
+    exc: AuthenticationFailed
+):
+    return JSONResponse(
+        status_code=exc.code,
+        content={"message": exc.message}
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder({"detail": exc.errors()}),
+    )
+
 
 class Roles(str, Enum):
     admin = "ADMIN"
@@ -59,7 +91,7 @@ class GreetingOut(BaseModel):
     meta: MetaOut
 
 
-@app.get("/")
+@app.get("/", deprecated=True)
 async def index():
     return {"message": "Hello world!"}
 
@@ -180,16 +212,24 @@ async def create_user(user: User):
     return user
 
 
-@app.post("/login/")
+@app.post(
+    "/login/",
+    summary="Login endpoint which should return authentication token.", 
+    response_description="Successful authentication message"
+)
 async def login(
     *, username: str = Form(...), password: str = Form(...),
     response: Response    
 ):
+    """
+    Login to application with following data
+
+    - **username**: Username of a user used while signing up
+    - **password**: A secret phrase/word used to protect account 
+    """
     if username == 'admin' and password == 'admin':
         return {"message": "Login Successful."}
-    else:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message": "Invalid credetials."}
+    raise AuthenticationFailed(message="Invalid Credentials")
 
 
 @app.post('/uploadfiles/')
