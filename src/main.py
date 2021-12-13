@@ -1,7 +1,8 @@
+import random
 from enum import Enum
 from typing import Optional, List
 
-from fastapi import FastAPI, Query, Path
+from fastapi import FastAPI, Query, Path, Body
 from pydantic import BaseModel
 
 
@@ -13,10 +14,13 @@ class Roles(str, Enum):
     superuser = "SUPERUSER"
 
 class Product(BaseModel):
-    id: int
     product_name: str
     price: float
     tax: Optional[int] = 10
+
+class User(BaseModel):
+    id: int
+    username: str
 
 
 @app.get("/")
@@ -52,25 +56,6 @@ async def check_params(
     }
 
 
-@app.post("/{category_id}/products/")
-async def create_product(
-    product: Product,
-    category_id: int,
-    draft: Optional[bool] = True
-):
-    total_tax = product.price * product.tax / 100 
-    response_data = {
-        "id": product.id,
-        "product_name": product.product_name,
-        "category_id": category_id, 
-        "price": product.price,
-        "total_tax": total_tax,
-        "total_cost": product.price + total_tax,
-        "is_active": not draft
-    }
-    return response_data
-
-
 @app.get('/validators/params/{id}')
 async def validate_params(
     *,
@@ -89,3 +74,35 @@ async def validate_params(
         'id': id    
     }
     return response_data
+
+
+@app.post("/{category_id}/products/")
+async def create_product(
+    *,
+    product: Product = Body(..., embed=True),
+    category_id: int,
+    draft: Optional[bool] = True
+):
+    total_tax = product.price * product.tax / 100 
+    response_data = {
+        "id": random.randint(1, 99999),
+        "product_name": product.product_name,
+        "category_id": category_id, 
+        "price": product.price,
+        "total_tax": total_tax,
+        "total_cost": product.price + total_tax,
+        "is_active": not draft
+    }
+    return response_data
+
+
+@app.put("/products/{id}")
+async def update_product(
+    id: int, user: User, product: Product, commit: Optional[bool] = Body(True)
+):
+    return {
+        "id": id,
+        "product": product,
+        "user": user,
+        "committed": commit
+    }
