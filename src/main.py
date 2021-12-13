@@ -3,7 +3,8 @@ from enum import Enum
 from typing import Optional, List
 
 from fastapi import FastAPI, Query, Path, Body
-from pydantic import BaseModel
+from fastapi.param_functions import File
+from pydantic import BaseModel, Field
 
 
 app = FastAPI()
@@ -13,14 +14,30 @@ class Roles(str, Enum):
     staff = "STAFF"
     superuser = "SUPERUSER"
 
+
+class Tag(BaseModel):
+    id: int = Field(..., ge=1)
+    title: str = Field(..., min_length=1, max_length=100)
+
+class Client(BaseModel):
+    id: int = Field(..., ge=1)
+    client_name: str = Field(..., min_length=1, max_length=200)
+
+
+class Project(BaseModel):
+    project_name: str = Field(..., min_length=1, max_length=200)
+    clients: Optional[List[Client]]
+    tags: List[str] = []
+
+
 class Product(BaseModel):
-    product_name: str
-    price: float
-    tax: Optional[int] = 10
+    product_name: str = Field(..., min_length=1, max_length=200)
+    price: float = Field(..., ge=1, lt=100000)
+    tax: Optional[int] = Field(5, ge=0, le=100)
 
 class User(BaseModel):
-    id: int
-    username: str
+    id: int = Field(..., ge=1, le=99999)
+    username: str = Field(..., min_length=10, max_length=50)
 
 
 @app.get("/")
@@ -106,3 +123,15 @@ async def update_product(
         "user": user,
         "committed": commit
     }
+
+
+@app.post("/tags")
+async def create_tags(tags: List[Tag]):
+    return tags
+
+
+@app.post("/projects")
+async def create_projects(project: Project):
+    response_data = {"id": random.randint(1, 99999)}
+    response_data.update(**project.dict())
+    return response_data
