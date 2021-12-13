@@ -2,7 +2,8 @@ import random
 from enum import Enum
 from typing import Optional, List
 
-from fastapi import FastAPI, Query, Path, Body
+from fastapi import (
+    FastAPI, Query, Path, Body, Cookie, Header)
 from fastapi.param_functions import File
 from pydantic import BaseModel, Field
 
@@ -35,9 +36,27 @@ class Product(BaseModel):
     price: float = Field(..., ge=1, lt=100000)
     tax: Optional[int] = Field(5, ge=0, le=100)
 
-class User(BaseModel):
+class UserInfo(BaseModel):
     id: int = Field(..., ge=1, le=99999)
     username: str = Field(..., min_length=10, max_length=50)
+
+
+class MetaOut(BaseModel):
+    session_id: Optional[str]
+    csrftoken: Optional[str]
+    user_agent: Optional[str]
+    language: Optional[str]
+    x_token: Optional[str]
+
+class GreetingOut(BaseModel):
+    message: str
+    meta: MetaOut
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    password: str
 
 
 @app.get("/")
@@ -45,9 +64,26 @@ async def index():
     return {"message": "Hello world!"}
 
 
-@app.get("/greet/{username}")
-async def greetings(username: str):
-    return {"message": f"Hello, {username}!"}
+@app.get("/greet/{username}", response_model=GreetingOut,
+        response_model_exclude_none=True)
+async def greetings(
+    username: str, 
+    sessionid: Optional[str] = Cookie(None),
+    csrftoken: Optional[str] = Cookie(None),
+    user_agent: Optional[str] = Header(None),
+    accept_language: Optional[str] = Header(None),
+    x_token: Optional[str] = Header(None)
+):
+    return {
+        "message": f"Hello, {username}!",
+        "meta": {
+            "session_id": sessionid,
+            "csrftoken": csrftoken,
+            "user_agent": user_agent,
+            "language": accept_language,
+            "x_token": x_token
+        }
+    }
 
 
 @app.get("/roles/{role}")
@@ -115,7 +151,7 @@ async def create_product(
 
 @app.put("/products/{id}")
 async def update_product(
-    id: int, user: User, product: Product, commit: Optional[bool] = Body(True)
+    id: int, user: UserInfo, product: Product, commit: Optional[bool] = Body(True)
 ):
     return {
         "id": id,
@@ -135,3 +171,9 @@ async def create_projects(project: Project):
     response_data = {"id": random.randint(1, 99999)}
     response_data.update(**project.dict())
     return response_data
+
+
+@app.post("/users", response_model=User, 
+          response_model_exclude={"password"})
+async def create_user(user: User):
+    return user
