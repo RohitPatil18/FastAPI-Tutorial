@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, Path
 from pydantic import BaseModel
 
 
@@ -67,5 +67,25 @@ async def create_product(
         "total_tax": total_tax,
         "total_cost": product.price + total_tax,
         "is_active": not draft
+    }
+    return response_data
+
+
+@app.get('/validators/params/{id}')
+async def validate_params(
+    *,
+    q: str = Query(
+        ..., min_length=5, max_length=10, title="Query",
+        description="Query for any word."),
+    query_fields: List[str] = Query(None, alias='query-fields'),
+    page_size: int,
+    id: int = Path(..., gt=0, le=100)
+):
+    query_field = query_fields if query_fields else '__all__'
+    response_data = {
+        'q': q, 
+        'query-fields': query_field, 
+        'length': page_size,
+        'id': id    
     }
     return response_data
