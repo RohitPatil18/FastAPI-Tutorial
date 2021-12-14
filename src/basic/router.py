@@ -1,9 +1,10 @@
 from typing import Optional, List
 from fastapi import (
     APIRouter, Query, Path, Cookie, Header, Response, 
-    status, UploadFile, Form, File)
+    status, UploadFile, Form, File, Depends)
 
 from core.exceptions import AuthenticationFailed
+from core.dependencies import get_current_user
 from .schema import GreetingOut, Tag
 
 
@@ -12,9 +13,9 @@ router = APIRouter(
 )
 
 
-@router.get("/", deprecated=True)
-async def index():
-    return {"message": "Hello world!"}
+@router.get("/")
+async def index(request: dict = Depends(get_current_user)):
+    return {"message": f"Hello, {request['logged_in_user']}!"}
 
 
 @router.get("/greet/{username}", response_model=GreetingOut,
