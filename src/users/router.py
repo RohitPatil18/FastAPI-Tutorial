@@ -1,7 +1,9 @@
-from typing import Optional
-from fastapi import APIRouter, status
+from typing import List, Optional
+from fastapi import APIRouter, status, Depends
 from fastapi.exceptions import HTTPException
 from fastapi.encoders import jsonable_encoder
+
+from core.dependencies import CommonQueryParameters
 
 from users.utils import userdata, Roles
 from users.schema import User, UserInfo
@@ -13,21 +15,10 @@ router = APIRouter(
 )
 
 
-@router.get("/params/{user_id}/{user_name}")
-async def check_params(
-    user_id: int, user_name: str, role: Roles, 
-    checkin: Optional[bool] = False
-):
-    """
-    Simple endpoint which takes URL parameters and Query 
-    Parameters and return them in Response.
-    """
-    return {
-        "id": user_id,
-        "user_name": user_name,
-        "role": role,
-        "checkin": checkin 
-    }
+@router.get("/", response_model=List[User])
+async def get_users_list(query: CommonQueryParameters = Depends()):
+    userslist = [user for _, user in userdata.items()]
+    return userslist[query.skip:query.limit]
 
 
 @router.post("/", response_model=User, 
@@ -47,3 +38,20 @@ async def partial_update_user(user: User, user_id: int):
     user = current_user_model.copy(update=updated_data)
     userdata[user_id] = jsonable_encoder(user)
     return user
+
+
+@router.get("/params/{user_id}/{user_name}")
+async def check_params(
+    user_id: int, user_name: str, role: Roles, 
+    checkin: Optional[bool] = False
+):
+    """
+    Simple endpoint which takes URL parameters and Query 
+    Parameters and return them in Response.
+    """
+    return {
+        "id": user_id,
+        "user_name": user_name,
+        "role": role,
+        "checkin": checkin 
+    }

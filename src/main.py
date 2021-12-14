@@ -1,10 +1,11 @@
 
-from fastapi import FastAPI, status, Request
+from fastapi import FastAPI, status, Request, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from core.exceptions import AuthenticationFailed
+from core.dependencies import check_session
 
 from basic.router import router as basic_router
 from products.router import products_router, categories_router
@@ -12,7 +13,9 @@ from projects.router import router as projects_router
 from users.router import router as users_router
 
 
-app = FastAPI()
+app = FastAPI(
+    dependencies=[Depends(check_session)]
+)
 
 
 @app.exception_handler(AuthenticationFailed)
