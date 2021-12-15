@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from core.exceptions import AuthenticationFailed
 from core.dependencies import check_session
 
+from auth.router import router as auth_router
 from basic.router import router as basic_router
 from products.router import products_router, categories_router
 from projects.router import router as projects_router
@@ -37,7 +38,7 @@ async def validation_exception_handler(
         content=jsonable_encoder({"detail": exc.errors()}),
     )
 
-
+app.include_router(auth_router)
 app.include_router(basic_router)
 app.include_router(categories_router)
 app.include_router(products_router)

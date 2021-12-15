@@ -1,5 +1,6 @@
+import time
 from typing import Optional
-from fastapi import Cookie, status
+from fastapi import Cookie, status, Request
 from fastapi.exceptions import HTTPException
 
 async def get_current_user():
@@ -18,3 +19,11 @@ async def check_session(sessionid: Optional[str] = Cookie(None)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid Session.')
     print(f'Session ID: {sessionid}')
+
+
+async def yield_dependency(request: Request):
+    try:
+        print("Yield Statement.")
+        yield True
+    finally:
+        print("After request completed.")

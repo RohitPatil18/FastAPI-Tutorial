@@ -1,3 +1,4 @@
 *.pyc
 .venv/
 v1/
+*.json

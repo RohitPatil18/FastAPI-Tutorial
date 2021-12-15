@@ -3,7 +3,8 @@ from fastapi import APIRouter, status, Depends
 from fastapi.exceptions import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from core.dependencies import CommonQueryParameters
+from core.dependencies import CommonQueryParameters, yield_dependency
+from auth.dependencies import get_current_user
 
 from users.utils import userdata, Roles
 from users.schema import User, UserInfo
@@ -43,7 +44,8 @@ async def partial_update_user(user: User, user_id: int):
 @router.get("/params/{user_id}/{user_name}")
 async def check_params(
     user_id: int, user_name: str, role: Roles, 
-    checkin: Optional[bool] = False
+    checkin: Optional[bool] = False,
+    flag: bool = Depends(yield_dependency)
 ):
     """
     Simple endpoint which takes URL parameters and Query 
@@ -55,3 +57,10 @@ async def check_params(
         "role": role,
         "checkin": checkin 
     }
+
+
+@router.get("/me", response_model=UserInfo)
+async def loggedin_user_info(
+    user: dict = Depends(get_current_user)
+):
+    return UserInfo(**user)
