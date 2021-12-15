@@ -8,12 +8,12 @@ from products.schema import Product
 
 categories_router = APIRouter(
     prefix='/categories',
-    tags=['Project', 'Category']
+    tags=['Product', 'Category']
 ) 
 
 products_router = APIRouter(
-    prefix='/projects',
-    tags=['Project']
+    prefix='/products',
+    tags=['Product']
 ) 
 
 
