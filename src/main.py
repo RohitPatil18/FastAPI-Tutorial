@@ -17,7 +17,12 @@ from users.router import router as users_router
 
 
 app = FastAPI(
-    dependencies=[Depends(check_session)]
+    title="FastAPI Tutorial",
+    description="Simple app created while learning FastAPI.",
+    version="0.0.1",
+    docs_url="/swagger",
+
+    dependencies=[Depends(check_session)],
 )
 
 
