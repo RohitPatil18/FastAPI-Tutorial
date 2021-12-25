@@ -5,6 +5,7 @@ from fastapi import FastAPI, status, Request, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from core.exceptions import AuthenticationFailed
 from core.dependencies import check_session
@@ -20,10 +21,11 @@ app = FastAPI(
     title="FastAPI Tutorial",
     description="Simple app created while learning FastAPI.",
     version="0.0.1",
-    docs_url="/swagger",
-
-    dependencies=[Depends(check_session)],
+    docs_url="/docs"
+    # dependencies=[Depends(check_session)],
 )
+
+app.mount("/static", StaticFiles(directory="media"), name="static")
 
 
 @app.exception_handler(AuthenticationFailed)

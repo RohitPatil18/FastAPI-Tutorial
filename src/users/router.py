@@ -29,7 +29,7 @@ async def create_user(user: User):
     return user
 
 
-@router.patch('/users/{user_id}', response_model=UserInfo)
+@router.patch('/{user_id}', response_model=UserInfo)
 async def partial_update_user(user: User, user_id: int):
     current_data = userdata.get(user_id)
     current_user_model = User(**current_data)
